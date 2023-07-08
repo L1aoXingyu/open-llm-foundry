@@ -302,7 +302,7 @@ def build_dataloader(dataset, batch_size, num_workers) -> DataLoader:
     # If not using workers, the torch DataLoader expects the default value for prefetch_factor,
     # which non-intuitively must be 2.
     prefetch_factor = max(1, 2 * batch_size //
-                          num_workers) if num_workers > 0 else 2
+                          num_workers) if num_workers > 0 else None
 
     return DataLoader(
         dataset=dataset,
