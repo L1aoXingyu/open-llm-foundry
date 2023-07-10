@@ -259,7 +259,8 @@ def build_text_dataloader(
         drop_last=cfg.drop_last,
         num_workers=cfg.num_workers,
         pin_memory=cfg.get('pin_memory', True),
-        prefetch_factor=cfg.get('prefetch_factor', None),
+        prefetch_factor=cfg.get('prefetch_factor', 2)
+        if cfg.num_workers > 0 else None,
         persistent_workers=cfg.get('persistent_workers', True),
         timeout=cfg.get('timeout', 0),
     )

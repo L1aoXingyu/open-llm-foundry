@@ -36,11 +36,42 @@ from typing import Dict
 
 def multiple_choice(inp: Dict[str, str]) -> Dict[str, str]:
     PROMPT_FORMAT = '{query}\nOptions:{options}\nAnswer: '
-    options = ''
-    for option in inp['choices']:
-        options += f'\n - {option}'
+    options = ''.join(f'\n - {option}' for option in inp['choices'])
     query = inp['query']
     return {
         'prompt': PROMPT_FORMAT.format(query=query, options=options),
         'response': inp['choices'][inp['gold']],
     }
+
+
+def wizardcoder_prompt(inp: Dict[str, str]) -> Dict[str, str]:
+    PROMPT_DICT = {
+        'prompt_input': (
+            'Below is an instruction that describes a task, paired with an input that provides further context. '
+            'Write a response that appropriately completes the request.\n\n'
+            '### Instruction:\n{instruction}\n\n### Input:\n{input}\n\n### Response:'
+        ),
+        'prompt_no_input':
+            ('Below is an instruction that describes a task. '
+             'Write a response that appropriately completes the request.\n\n'
+             '### Instruction:\n{instruction}\n\n### Response:'),
+    }
+
+    if 'input' in inp:
+        return {
+            'prompt':
+                PROMPT_DICT['prompt_input'].format(instruction=inp['prompt'],
+                                                   input=inp['input']) if
+                inp['input'] != '' else PROMPT_DICT['prompt_no_input'].format(
+                    instruction=inp['prompt']),
+            'response':
+                inp['response'],
+        }
+    else:
+        return {
+            'prompt':
+                PROMPT_DICT['prompt_no_input'].format(instruction=inp['prompt']
+                                                     ),
+            'response':
+                inp['response'],
+        }

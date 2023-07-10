@@ -66,9 +66,8 @@ def parse_args() -> Namespace:
 
     parsed = parser.parse_args()
 
-    if os.path.isdir(parsed.out_root) and len(
-            set(os.listdir(parsed.out_root)).intersection(set(
-                parsed.splits))) > 0:
+    if os.path.isdir(parsed.out_root) and set(os.listdir(
+            parsed.out_root)).intersection(set(parsed.splits)):
         raise ValueError(
             f'--out_root={parsed.out_root} contains {os.listdir(parsed.out_root)} which cannot overlap with the requested splits {parsed.splits}.'
         )
