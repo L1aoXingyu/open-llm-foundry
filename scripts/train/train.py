@@ -107,7 +107,6 @@ def print_trainable_parameters(model) -> None:
 
 def build_dataloader(cfg, tokenizer, device_batch_size):
     if cfg.name == 'text':
-        streaming.base.util.clean_stale_shared_memory()
         return build_text_dataloader(
             cfg,
             tokenizer,
@@ -211,6 +210,8 @@ def main(cfg):
     print(f'{cfg.n_params=:.2e}')
 
     # Dataloaders
+    # clean shared memory
+    streaming.base.util.clean_stale_shared_memory()
     print('Building train loader...')
     train_loader = build_dataloader(
         cfg.train_loader,
