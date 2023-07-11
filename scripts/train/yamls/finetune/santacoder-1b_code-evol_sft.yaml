@@ -2,20 +2,27 @@ max_seq_len: 2048
 global_seed: 17
 
 # Run Name
-run_name: # If left blank, will be read from env var $COMPOSER_RUN_NAME
+# <data>-gpt-<#params>-<precision>-<arch>-<#bsz>-<#ctxlen>-<#tok>-<#nodes>-<cluster-name>-<etc>
+run_name: code_evol_20k-santacoder-1b-bf16-plr2e-5-mlr0-gbsz256-ctxlen2048-ep3-wmup30
 
-# Model
 model:
   name: mpt_causal_lm
   init_device: meta
+  emb_pdrop: 0.1
+  resid_pdrop: 0.1
   d_model: 2048
+  expansion_ratio: 4
   n_heads: 16 # Modified 24->16 so that d_head == 128 to statisfy FlashAttention
   n_layers: 24
-  expansion_ratio: 4
   max_seq_len: ${max_seq_len}
-  vocab_size: 50368
+  vocab_size: 49280
+  multiquery_attention: ture
   attn_config:
-    attn_impl: triton
+    attn_impl: flash
+    attn_pdrop: 0.1
+
+load_path: /dataset_goosefs/cos_shanghai_1/lxy/ep1-ba181198-rank0.pt
+load_weights_only: true
 
 # Tokenizer
 tokenizer:
@@ -42,9 +49,9 @@ train_loader:
     max_seq_len: ${max_seq_len}
     allow_pad_trimming: false
     decoder_only_format: true
-    # # Use `python llmfoundry/data/packing.py --yaml-path /path/to/this/yaml/ ...`
-    # # to profile this run's optimal packing_ratio as it depends on GPU count,
-    # # batch size, sequence length
+    # Use `python llmfoundry/data/packing.py --yaml-path /path/to/this/yaml/ ...`
+    # to profile this run's optimal packing_ratio as it depends on GPU count,
+    # batch size, sequence length
     # packing_ratio:
   num_workers: 8
   drop_last: true
@@ -52,12 +59,12 @@ train_loader:
 # Optimization
 scheduler:
   name: cosine_with_warmup
-  t_warmup: 100ba
+  t_warmup: 30ba
   alpha_f: 0.1
 
 optimizer:
   name: decoupled_adamw
-  lr: 6.0e-4
+  lr: 2.0e-5
   betas:
   - 0.9
   - 0.95
@@ -69,24 +76,23 @@ algorithms:
     clipping_type: norm
     clipping_threshold: 1.0
 
-max_duration: 1ep
+max_duration: 3ep
 eval_interval: 1
 eval_first: false
 eval_subset_num_batches: -1
-global_train_batch_size: 32
+global_train_batch_size: 256
 
 # System
 seed: ${global_seed}
 device_eval_batch_size: 1
-device_train_microbatch_size: 1
-# device_train_microbatch_size: auto
+device_train_microbatch_size: auto
 precision: amp_bf16
 
 # FSDP
 fsdp_config:
   sharding_strategy: FULL_SHARD
   mixed_precision: PURE
-  activation_checkpointing: true
+  activation_checkpointing: false
   activation_checkpointing_reentrant: false
   activation_cpu_offload: false
   limit_all_gathers: true
@@ -95,7 +101,7 @@ fsdp_config:
 # Logging
 progress_bar: false
 log_to_console: true
-console_log_interval: 20ba
+console_log_interval: 1ba
 
 callbacks:
   speed_monitor:
@@ -104,13 +110,14 @@ callbacks:
   memory_monitor: {}
   runtime_estimator: {}
 
-# loggers:
-#   wandb: {}
+loggers:
+  wandb:
+    project: ArmstrongCoder
 
 # Checkpoint to local filesystem or remote object store
-# save_interval: 500ba
-# save_num_checkpoints_to_keep: 1  # Important, this cleans up checkpoints saved to DISK
-# save_folder: ./{run_name}/checkpoints
+save_interval: 10ba
+save_num_checkpoints_to_keep: 2  # Important, this cleans up checkpoints saved to DISK
+save_folder: ./output/${run_name}/checkpoints
 # save_folder: s3://my-bucket/my-folder/{run_name}/checkpoints
 
 # Load from local filesystem or remote object store

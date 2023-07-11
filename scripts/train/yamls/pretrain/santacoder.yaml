@@ -126,7 +126,7 @@ callbacks:
 
 # loggers:
 #   wandb:
-#     project: llm-foundry-test
+#     project: ArmstrongCoder
 
 # Checkpoint to local filesystem or remote object store
 save_interval: 3000ba
